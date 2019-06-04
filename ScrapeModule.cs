@@ -21,10 +21,9 @@ namespace PinScraper
 
             await messages.ForEachAsync(async messageList =>
             {
-                foreach (IMessage message in messageList)
-                {
-                    await message.DeleteAsync();
-                }
+                IEnumerable<Task> deleteTask = messageList.Select(message => message.DeleteAsync());
+
+                await Task.WhenAll(deleteTask);
             });
         }
 
@@ -41,23 +40,32 @@ namespace PinScraper
         {
             //TODO Rate limiting is a thing and fuck Discord
 
-            IReadOnlyCollection<RestMessage> pinnedMessages = channel.GetPinnedMessagesAsync().Result;
+            IReadOnlyCollection<RestMessage> pinnedMessages = await channel.GetPinnedMessagesAsync();
 
-            await Program.Log(new LogMessage(LogSeverity.Debug, "Scrape", $"Number of pins: {pinnedMessages.Count}"));
+            await Program.Log(
+                new LogMessage(
+                    LogSeverity.Debug,
+                    "Scrape",
+                    $"Number of pins: {pinnedMessages.Count}"));
 
-            foreach (RestMessage message in pinnedMessages)
+            IEnumerable<Task<RestUserMessage>> sendMessageTasks = pinnedMessages
+                .Select(message =>
+                    Context.Message.Channel.SendMessageAsync(embed: GetEmbedFromMessage(message)));
+
+            await Task.WhenAll(sendMessageTasks);
+        }
+
+        private Embed GetEmbedFromMessage(RestMessage message)
+        {
+            return new EmbedBuilder
             {
-                Random random = new Random();
-
-                Embed embed = new EmbedBuilder
+                Author = new EmbedAuthorBuilder
                 {
-                    Author = new EmbedAuthorBuilder
-                    {
-                        IconUrl = message.Author.GetAvatarUrl(),
-                        Name = $"{message.Author.Username}#{message.Author.Discriminator}"
-                    },
-                    Color = new Color(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255)),
-                    Fields = new List<EmbedFieldBuilder>
+                    IconUrl = message.Author.GetAvatarUrl(),
+                    Name = $"{message.Author.Username}#{message.Author.Discriminator}"
+                },
+                Color = GetRandomColor(),
+                Fields = new List<EmbedFieldBuilder>
                     {
                         new EmbedFieldBuilder
                         {
@@ -72,19 +80,31 @@ namespace PinScraper
                             Value = message.Attachments.Count
                         }
                     },
-                    ImageUrl = message.Attachments.Count != 0 ? message.Attachments.ElementAt(0).Url : "" ,
-                    Timestamp = message.Timestamp,
-                    Title = "Pinned Message",
-                    Url = message.GetJumpUrl(),
-                    Footer = new EmbedFooterBuilder
-                    {
-                        Text = message.Channel.Name,
-                        IconUrl = Context.Guild.IconUrl
-                    }
-                }.Build();
+                ImageUrl = message.Attachments.Count != 0
+                        ? message.Attachments.ElementAt(0).Url
+                        : string.Empty,
+                Timestamp = message.Timestamp,
+                Title = "Pinned Message",
+                Url = message.GetJumpUrl(),
+                Footer = new EmbedFooterBuilder
+                {
+                    Text = message.Channel.Name,
+                    IconUrl = Context.Guild.IconUrl
+                }
+            }.Build();
+        }
 
-                await Context.Message.Channel.SendMessageAsync(embed: embed);
-            }
+        private static Color GetRandomColor()
+        {
+            var random = new Random();
+
+            const int INCLUSIVE_MIN_HEX = 0;
+            const int EXCLUSIVE_MAX_HEX = 256;
+
+            return new Color(
+                random.Next(INCLUSIVE_MIN_HEX, EXCLUSIVE_MAX_HEX),
+                random.Next(INCLUSIVE_MIN_HEX, EXCLUSIVE_MAX_HEX),
+                random.Next(INCLUSIVE_MIN_HEX, EXCLUSIVE_MAX_HEX));
         }
     }
 }
