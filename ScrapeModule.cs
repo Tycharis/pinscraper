@@ -23,36 +23,36 @@ namespace PinScraper
             {
                 IEnumerable<Task> deleteTask = messageList.Select(message => message.DeleteAsync());
 
-                await Task.WhenAll(deleteTask);
-            });
+                await Task.WhenAll(deleteTask).ConfigureAwait(false);
+            }).ConfigureAwait(false);
         }
 
         [Command("scrape", RunMode = RunMode.Async)]
         [Summary("Scrapes pins from the channel executed in")]
-        public async Task ScrapeAsync()
+        public Task ScrapePinsAsync()
         {
-            await ScrapeAsync(Context.Channel);
+            return ScrapePinsAsync(Context.Channel);
         }
 
         [Command("scrape", RunMode = RunMode.Async)]
         [Summary("Scrapes pins from a specified channel")]
-        public async Task ScrapeAsync(ISocketMessageChannel channel)
+        public async Task ScrapePinsAsync(ISocketMessageChannel channel)
         {
             //TODO Rate limiting is a thing and fuck Discord
 
-            IReadOnlyCollection<RestMessage> pinnedMessages = await channel.GetPinnedMessagesAsync();
+            IReadOnlyCollection<RestMessage> pinnedMessages = await channel.GetPinnedMessagesAsync().ConfigureAwait(false);
 
             await Program.Log(
                 new LogMessage(
                     LogSeverity.Debug,
                     "Scrape",
-                    $"Number of pins: {pinnedMessages.Count}"));
+                    $"Number of pins for channel {channel.Name}: {pinnedMessages.Count}")).ConfigureAwait(false);
 
             IEnumerable<Task<RestUserMessage>> sendMessageTasks = pinnedMessages
                 .Select(message =>
                     Context.Message.Channel.SendMessageAsync(embed: GetEmbedFromMessage(message)));
 
-            await Task.WhenAll(sendMessageTasks);
+            await Task.WhenAll(sendMessageTasks).ConfigureAwait(false);
         }
 
         private Embed GetEmbedFromMessage(RestMessage message)

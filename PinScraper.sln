@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2002
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PinScraper", "PinScraper.csproj", "{97B009E7-07D7-4EB5-A08B-F00841656E18}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChallongeApi", "..\ChallongeApi\ChallongeApi.csproj", "{00DF0398-0ADD-490D-8046-078C0E76C8A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChallongeApiTests", "..\ChallongeApiTests\ChallongeApiTests.csproj", "{DF2F6BE0-7A51-48F0-B9A6-960307EB69AB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{97B009E7-07D7-4EB5-A08B-F00841656E18}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97B009E7-07D7-4EB5-A08B-F00841656E18}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97B009E7-07D7-4EB5-A08B-F00841656E18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00DF0398-0ADD-490D-8046-078C0E76C8A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00DF0398-0ADD-490D-8046-078C0E76C8A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00DF0398-0ADD-490D-8046-078C0E76C8A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00DF0398-0ADD-490D-8046-078C0E76C8A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF2F6BE0-7A51-48F0-B9A6-960307EB69AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF2F6BE0-7A51-48F0-B9A6-960307EB69AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF2F6BE0-7A51-48F0-B9A6-960307EB69AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF2F6BE0-7A51-48F0-B9A6-960307EB69AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

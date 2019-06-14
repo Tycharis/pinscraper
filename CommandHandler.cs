@@ -6,6 +6,8 @@ namespace PinScraper
 {
     internal class CommandHandler
     {
+        public const char CommandPrefix = '$';
+
         private readonly DiscordSocketClient _client;
 
         private readonly CommandService _commands;
@@ -20,7 +22,7 @@ namespace PinScraper
         {
             _client.MessageReceived += HandleCommandAsync;
 
-            await _commands.AddModuleAsync<ScrapeModule>(null);
+            await _commands.AddModuleAsync<ScrapeModule>(null).ConfigureAwait(false);
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)
@@ -32,7 +34,7 @@ namespace PinScraper
 
             int argPos = 0;
 
-            if (!(message.HasCharPrefix('$', ref argPos) ||
+            if (!(message.HasCharPrefix(CommandPrefix, ref argPos) ||
                   message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
             {
@@ -41,7 +43,7 @@ namespace PinScraper
 
             var context = new SocketCommandContext(_client, message);
 
-            await _commands.ExecuteAsync(context, argPos, null);
+            await _commands.ExecuteAsync(context, argPos, null).ConfigureAwait(false);
         }
     }
 }

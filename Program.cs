@@ -22,7 +22,7 @@ namespace PinScraper
                 throw new ArgumentException("No token provided. It should be the first argument");
             }
 
-            new Program().MainAsync(args[0]).GetAwaiter().GetResult();
+            new Program().MainAsync(args[0]).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public async Task MainAsync(string token)
@@ -32,12 +32,13 @@ namespace PinScraper
             _handler = new CommandHandler(_client, _service);
 
             _client.Log += Log;
-            await _handler.InstallCommandsAsync();
 
-            await _client.LoginAsync(TokenType.Bot, token);
-            await _client.StartAsync();
+            await _handler.InstallCommandsAsync().ConfigureAwait(false);
 
-            await Task.Delay(-1);
+            await _client.LoginAsync(TokenType.Bot, token).ConfigureAwait(false);
+            await _client.StartAsync().ConfigureAwait(false);
+
+            await Task.Delay(-1).ConfigureAwait(false);
         }
 
         public static Task Log(LogMessage message)
