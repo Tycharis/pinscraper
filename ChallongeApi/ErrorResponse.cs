@@ -7,6 +7,9 @@ namespace ChallongeApi
 {
     public class ErrorResponse : ChallongeResponse
     {
+        [JsonProperty("errors")]
+        public IEnumerable<string> Errors { get; set; }
+
         public static ErrorResponse GetEmptyError(HttpStatusCode statusCode)
         {
             return new ErrorResponse
@@ -15,8 +18,5 @@ namespace ChallongeApi
                 Errors = Array.Empty<string>()
             };
         }
-
-        [JsonProperty("errors")]
-        public IEnumerable<string> Errors { get; set; }
     }
 }
