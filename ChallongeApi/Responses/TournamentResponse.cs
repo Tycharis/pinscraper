@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace ChallongeApi
+namespace ChallongeApi.Responses
 {
     public class Tournament
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace ChallongeApi
+namespace ChallongeApi.Responses
 {
     public class Participant
     {
@@ -30,7 +30,7 @@ namespace ChallongeApi
         public int Id { get; set; }
 
         [JsonProperty("invitation_id")]
-        public int InvitationId { get; set; }
+        public int? InvitationId { get; set; }
 
         [JsonProperty("invite_email")]
         public string InviteEmail { get; set; }

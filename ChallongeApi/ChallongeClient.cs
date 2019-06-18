@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using ChallongeApi.Responses;
 using Newtonsoft.Json;
 
 namespace ChallongeApi
@@ -132,7 +133,14 @@ namespace ChallongeApi
 
             if (response.IsSuccessStatusCode)
             {
-                return JsonConvert.DeserializeObject<IEnumerable<ParticipantResponse>>(await response.Content.ReadAsStringAsync());
+                var participantResponses = JsonConvert.DeserializeObject<IEnumerable<ParticipantResponse>>(await response.Content.ReadAsStringAsync());
+
+                return participantResponses.Select(participantResponse =>
+                {
+                    participantResponse.StatusCode = HttpStatusCode.OK;
+
+                    return participantResponse;
+                });
             }
 
             if (response.StatusCode != HttpStatusCode.UnprocessableEntity)
@@ -163,11 +171,11 @@ namespace ChallongeApi
 
         public static IEnumerable<IParticipant> AssignSeeds(IEnumerable<IParticipant> participants)
         {
-            return participants.Select((p, i) =>
+            return participants.Select((participant, i) =>
             {
-                p.Seed = i;
+                participant.Seed = i + 1;
 
-                return p;
+                return participant;
             });
         }
 

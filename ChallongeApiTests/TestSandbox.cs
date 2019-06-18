@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ChallongeApi;
+using ChallongeApi.Responses;
 using Newtonsoft.Json;
 
 namespace ChallongeApiTests
@@ -18,11 +19,11 @@ namespace ChallongeApiTests
 
             var client = new ChallongeClient(API_KEY);
 
-            const string TOURNAMENT_URL = "testurlstrthingy";
+            const string TOURNAMENT_URL = "testshitjasdfoasihdfasdf";
 
             Console.WriteLine($"Getting tournament {TOURNAMENT_URL}");
 
-            IChallongeResponse tournament = client.GetTournament(TOURNAMENT_URL).Result;
+            IChallongeResponse tournament = await client.GetTournament(TOURNAMENT_URL);
 
             Console.WriteLine("Done!");
 
@@ -53,7 +54,7 @@ namespace ChallongeApiTests
             }
 
             IEnumerable<IParticipant> participants = ChallongeClient.AssignSeeds(
-                new[]{
+                new[] {
                     new MyParticipant
                     {
                         Name = "TestGuyasdf334",
@@ -84,7 +85,7 @@ namespace ChallongeApiTests
 
             if (participantsResponse is IEnumerable<ParticipantResponse> validParticipantResponse)
             {
-                IEnumerable<Participant> asParticipantObjects = validParticipantResponse.Select(x => x.Participant);
+                IEnumerable<Participant> asParticipantObjects = validParticipantResponse.Select(res => res.Participant);
 
                 Console.WriteLine($"Found all of the participants for tournament: {TOURNAMENT_URL}");
 
