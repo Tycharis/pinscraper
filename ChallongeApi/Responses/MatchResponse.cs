@@ -1,97 +1,110 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
 namespace ChallongeApi.Responses
 {
     public class Match
     {
-        // TODO: type unknown
         [JsonProperty("attachment_count")]
-        public object AttachmentCount { get; set; }
+        public int? AttachmentCount { get; }
 
-        public DateTime CreatedAt { get; set; }
+        [JsonProperty("created_at")]
+        public DateTime CreatedAt { get; }
 
         // TODO: type unknown
         [JsonProperty("group_id")]
-        public object GroupId { get; set; }
+        public object GroupId { get; }
 
         [JsonProperty("has_attachment")]
-        public bool HasAttachment { get; set; }
+        public bool HasAttachment { get; }
 
         [JsonProperty("id")]
-        public int Id { get; set; }
+        public int Id { get; }
 
         [JsonProperty("identifier")]
-        public string Identifier { get; set; }
+        public string Identifier { get; }
 
         // TODO: type unknown
         [JsonProperty("location")]
-        public object Location { get; set; }
+        public object Location { get; }
 
         [JsonProperty("loser_id")]
-        public int? LoserId { get; set; }
+        public int? LoserId { get; }
 
         [JsonProperty("player1_id")]
-        public int PlayerOneId { get; set; }
+        public int? PlayerOneId { get; }
 
         [JsonProperty("player1_is_prereq_match_loser")]
-        public bool PlayerOneIsPrerequisiteMatchLoser { get; set; }
+        public bool PlayerOneIsPrerequisiteMatchLoser { get; }
 
         // TODO: type unknown
         [JsonProperty("player1_prereq_match_id")]
-        public object PlayerOnePrerequisiteMatchId { get; set; }
+        public object PlayerOnePrerequisiteMatchId { get; }
 
         // TODO: type unknown
         [JsonProperty("player1_votes")]
-        public object PlayerOneVotes { get; set; }
+        public object PlayerOneVotes { get; }
 
         [JsonProperty("player2_id")]
-        public int PlayerTwoId { get; set; }
+        public int? PlayerTwoId { get; }
 
         [JsonProperty("player2_is_prereq_match_loser")]
-        public bool PlayerTwoIsPrerequisiteMatchLoser { get; set; }
+        public bool PlayerTwoIsPrerequisiteMatchLoser { get; }
 
         // TODO: type unknown
         [JsonProperty("player2_prereq_match_id")]
-        public object PlayerTwoPrerequisiteMatchId { get; set; }
+        public object PlayerTwoPrerequisiteMatchId { get; }
 
         // TODO: type unknown
         [JsonProperty("player2_votes")]
-        public object PlayerTwoVotes { get; set; }
+        public object PlayerTwoVotes { get; }
 
         [JsonProperty("round")]
-        public int Round { get; set; }
+        public int Round { get; }
 
         [JsonProperty("scheduled_time")]
-        public DateTime? ScheduledTime { get; set; }
+        public DateTime? ScheduledTime { get; }
 
         [JsonProperty("started_at")]
-        public DateTime? StartedAt { get; set; }
+        public DateTime? StartedAt { get; }
 
         [JsonProperty("state")]
-        public string State { get; set; }
+        public MatchState State { get; }
 
         [JsonProperty("tournament_id")]
-        public int TournamentId { get; set; }
+        public int TournamentId { get; }
 
+        // TODO: type unknown
         [JsonProperty("underway_at")]
-        public object UnderwayAt { get; set; }
+        public object UnderwayAt { get; }
 
         [JsonProperty("updated_at")]
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime? UpdatedAt { get; }
 
         [JsonProperty("winner_id")]
-        public int? WinnerId { get; set; }
+        public int? WinnerId { get; }
 
         [JsonProperty("prerequisite_match_ids_csv")]
-        public string PrerequisiteMatchIdsCsv { get; set; }
+        public string PrerequisiteMatchIdsCsv { get; }
 
         [JsonProperty("scores_csv")]
-        public string ScoresCsv { get; set; }
+        public string ScoresCsv { get; }
     }
 
     public class MatchResponse : ChallongeResponse
     {
-        public Match Match { get; set; }
+        [JsonProperty("match")]
+        public Match Match { get; }
+    }
+
+    public enum MatchState
+    {
+        [EnumMember(Value = "pending")]
+        Pending,
+        [EnumMember(Value = "open")]
+        Open,
+        [EnumMember(Value = "complete")]
+        Complete
     }
 }

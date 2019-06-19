@@ -163,6 +163,7 @@ namespace ChallongeApi.Responses
         [JsonProperty("description_source")]
         public string DescriptionSource { get; set; }
 
+        // TODO: type unknown
         [JsonProperty("subdomain")]
         public object Subdomain { get; set; }
 

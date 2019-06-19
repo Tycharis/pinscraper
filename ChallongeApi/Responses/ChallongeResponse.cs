@@ -7,12 +7,15 @@ namespace ChallongeApi.Responses
 {
     public interface IChallongeResponse
     {
-        HttpStatusCode StatusCode { get; set; }
+        HttpStatusCode StatusCode { get; }
     }
 
+    /// <summary>
+    /// The base class that represents a response from the Challonge API.
+    /// </summary>
     public abstract class ChallongeResponse : IChallongeResponse
     {
-        public HttpStatusCode StatusCode { get; set; }
+        public HttpStatusCode StatusCode { get; internal set; }
 
         public static async Task<T> FromHttpResponseMessageAsync<T>(HttpResponseMessage responseMessage)
             where T : ChallongeResponse

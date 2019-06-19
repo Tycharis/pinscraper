@@ -15,11 +15,37 @@ namespace ChallongeApiTests
     {
         public static async Task Main(string[] args)
         {
-            const string API_KEY = "j5DC3td0sunw11mOHdDVwR6XnLLOuTXmJE8WLFRI";
+            MyParticipant[] participants =
+            {
+                new MyParticipant
+                {
+                    Name = "asdf"
+                },
+                new MyParticipant
+                {
+                    Name = "foo"
+                },
+                new MyParticipant
+                {
+                    Name = "bar"
+                }
+            };
+
+            foreach (MyParticipant participant in participants.Set(x => x.Name += " addedText"))
+            {
+                Console.WriteLine(participant.Name);
+            }
+
+            await TestChallongeApi();
+        }
+
+        private static async Task TestChallongeApi()
+        {
+            const string API_KEY = "8nwaN3JaAO3Tf1EwNRFCQ6343tokAW4FXKUwwVMM";
 
             var client = new ChallongeClient(API_KEY);
 
-            const string TOURNAMENT_URL = "testshitjasdfoasihdfasdf";
+            const string TOURNAMENT_URL = "testurlstrthingy";
 
             Console.WriteLine($"Getting tournament {TOURNAMENT_URL}");
 
@@ -101,6 +127,43 @@ namespace ChallongeApiTests
 
                     ConsoleWriteFormattedJson(validSingleParticipantResponse);
                 }
+            }
+
+            IEnumerable<IChallongeResponse> matchesResponse = await client.GetAllMatches(TOURNAMENT_URL);
+
+            if (matchesResponse is IEnumerable<MatchResponse> validMatchesResponse)
+            {
+                ConsoleWriteFormattedJson(validMatchesResponse);
+
+                Match firstMatch = validMatchesResponse.FirstOrDefault()?.Match;
+
+                if (firstMatch != null)
+                {
+                    IChallongeResponse matchResponse = await client.GetAMatch(
+                        TOURNAMENT_URL,
+                        firstMatch.Id);
+
+                    ConsoleWriteFormattedJson(matchResponse);
+
+                    var matchScore = new MatchScore(
+                        new MatchParticipant(firstMatch.PlayerOneId.Value, 3),
+                        new MatchParticipant(firstMatch.PlayerTwoId.Value, 5));
+
+                    IChallongeResponse updateFirstMatchResponse = await client.UpdateAMatch(
+                        TOURNAMENT_URL,
+                        firstMatch.Id,
+                        matchScore);
+
+                    ConsoleWriteFormattedJson(updateFirstMatchResponse);
+                }
+                else
+                {
+                    Console.WriteLine("\n\nFIRST MATCH NOT FOUND\n\n");
+                }
+            }
+            else
+            {
+                ConsoleWriteFormattedJson(matchesResponse);
             }
 
             Console.ReadLine();
