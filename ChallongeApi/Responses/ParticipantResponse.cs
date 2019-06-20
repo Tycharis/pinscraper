@@ -1,8 +1,10 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace ChallongeApi.Responses
 {
+    [PublicAPI]
     public class Participant
     {
         [JsonProperty("active")]
@@ -94,6 +96,7 @@ namespace ChallongeApi.Responses
         public bool Reactivatable { get; set; }
     }
 
+    [PublicAPI]
     public class ParticipantResponse : ChallongeResponse
     {
         [JsonProperty("participant")]

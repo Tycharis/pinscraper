@@ -2,7 +2,7 @@
 using System.Linq;
 using JetBrains.Annotations;
 
-namespace ChallongeApi
+namespace ChallongeApi.Matches
 {
     /// <summary>
     /// Represents a participant in a match.
@@ -85,10 +85,8 @@ namespace ChallongeApi
     [PublicAPI]
     public class SetScore
     {
-        [PublicAPI]
         public int ParticipantOneScore { get; }
 
-        [PublicAPI]
         public int ParticipantTwoScore { get; }
 
         [PublicAPI]
@@ -114,13 +112,10 @@ namespace ChallongeApi
     [PublicAPI]
     public class SetScores
     {
-        [PublicAPI]
         public IEnumerable<SetScore> Scores { get; }
 
-        [PublicAPI]
         public int ParticipantOneId { get; }
 
-        [PublicAPI]
         public int ParticipantTwoId { get; }
 
         [PublicAPI]
@@ -189,6 +184,7 @@ namespace ChallongeApi
         /// <summary>
         /// Gets the count of sets that participant two won.
         /// </summary>
+        [PublicAPI]
         public int ParticipantTwoWonSetsCount()
         {
             return Scores.Count(x => x.ParticipantTwoScore > x.ParticipantOneScore);

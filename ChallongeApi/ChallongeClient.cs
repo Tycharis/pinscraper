@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ChallongeApi.Enums;
+using ChallongeApi.Matches;
 using ChallongeApi.Responses;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -22,455 +23,629 @@ namespace ChallongeApi
 
         private const string BaseApiUrl = "https://api.challonge.com/" + ApiVersion + "/";
 
-        private readonly string _apiKey;
+        public Tournament TournamentApi { get; }
 
+        public Participant ParticipantApi { get; }
+
+        public Match MatchApi { get; }
+
+        public Attachment AttachmentApi { get; }
+
+        [PublicAPI]
         public ChallongeClient(string apiKey)
         {
-            _apiKey = apiKey;
-        }
-
-        /// <summary>
-        /// Gets a tournament by id
-        /// </summary>
-        /// <param name="tournamentId"></param>
-        /// <param name="includeParticipants"></param>
-        /// <param name="includeMatches"></param>
-        /// <returns></returns>
-        [PublicAPI]
-        public Task<IChallongeResponse> GetTournament(
-            int tournamentId,
-            bool includeParticipants = false,
-            bool includeMatches = false)
-        {
-            return GetTournament<int>(tournamentId, includeParticipants, includeMatches);
+            TournamentApi = new Tournament(apiKey);
+            ParticipantApi = new Participant(apiKey);
+            MatchApi = new Match(apiKey);
+            AttachmentApi = new Attachment(apiKey);
         }
 
         [PublicAPI]
-        public Task<IChallongeResponse> GetTournament(
-            string tournamentId,
-            bool includeParticipants = false,
-            bool includeMatches = false)
+        public class Tournament
         {
-            return GetTournament<string>(tournamentId, includeParticipants, includeMatches);
-        }
+            private readonly string _apiKey;
 
-        private async Task<IChallongeResponse> GetTournament<T>(
-            T tournamentId,
-            bool includeParticipants = false,
-            bool includeMatches = false)
-            where T : IConvertible
-        {
-            var getTournamentUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}.json?api_key={_apiKey}");
-
-            using HttpResponseMessage response = await Client.GetAsync(getTournamentUri);
-
-            if (response.IsSuccessStatusCode)
+            public Tournament(string apiKey)
             {
-                return await ChallongeResponse.FromHttpResponseMessageAsync<TournamentResponse>(response);
+                _apiKey = apiKey;
             }
 
-            return response.StatusCode == HttpStatusCode.UnprocessableEntity
-                ? await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response)
-                : ErrorResponse.GetEmptyError(response.StatusCode);
-        }
-
-        [PublicAPI]
-        public Task<IChallongeResponse> BulkAddParticipants(int tournamentId, IEnumerable<IParticipant> participants)
-        {
-            return BulkAddParticipants<int>(tournamentId, participants);
-        }
-
-        [PublicAPI]
-        public Task<IChallongeResponse> BulkAddParticipants(string tournamentId, IEnumerable<IParticipant> participants)
-        {
-            return BulkAddParticipants<string>(tournamentId, participants);
-        }
-
-        private async Task<IChallongeResponse> BulkAddParticipants<T>(T tournamentId, IEnumerable<IParticipant> participants)
-            where T : IConvertible
-        {
-            var postParticipantsUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}/participants/bulk_add.json?api_key={_apiKey}");
-
-            var payload = new ParticipantPayload(participants);
-
-            string serializedPayload = JsonConvert.SerializeObject(payload);
-
-            var jsonContent = new StringContent(serializedPayload, Encoding.UTF8, "application/json");
-
-            using HttpResponseMessage response = await Client.PostAsync(
-                postParticipantsUri,
-                jsonContent);
-
-            if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+            /// <summary>
+            /// Gets a tournament by id.
+            /// </summary>
+            /// <param name="tournamentId"></param>
+            /// <param name="includeParticipants">Optionally includes the list of tournament participants.</param>
+            /// <param name="includeMatches">Optionally includes the list of tournament matches.</param>
+            /// <returns></returns>
+            [PublicAPI]
+            public Task<IChallongeResponse> GetTournament(
+                int tournamentId,
+                bool includeParticipants = false,
+                bool includeMatches = false)
             {
-                return await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response);
+                return GetTournament<int>(tournamentId, includeParticipants, includeMatches);
             }
 
-            return response.IsSuccessStatusCode
-                ? await ChallongeResponse.FromHttpResponseMessageAsync<ChallongeResponse>(response)
-                : ErrorResponse.GetEmptyError(response.StatusCode);
-        }
-
-        private class ParticipantPayload
-        {
-            [JsonProperty("participants")]
-            public IEnumerable<IParticipant> Participants { get; set; }
-
-            public ParticipantPayload(IEnumerable<IParticipant> participants)
+            /// <summary>
+            /// Gets a tournament by id.
+            /// </summary>
+            /// <param name="tournamentId"></param>
+            /// <param name="includeParticipants">Optionally includes the list of tournament participants.</param>
+            /// <param name="includeMatches">Optionally includes the list of tournament matches.</param>
+            /// <returns></returns>
+            [PublicAPI]
+            public Task<IChallongeResponse> GetTournament(
+                string tournamentId,
+                bool includeParticipants = false,
+                bool includeMatches = false)
             {
-                Participants = participants;
+                return GetTournament<string>(tournamentId, includeParticipants, includeMatches);
+            }
+
+            private async Task<IChallongeResponse> GetTournament<T>(
+                T tournamentId,
+                bool includeParticipants = false,
+                bool includeMatches = false)
+                where T : IConvertible
+            {
+                string baseGetTournamentUriStr = $"{BaseApiUrl}tournaments/{tournamentId}.json?api_key={_apiKey}";
+
+                if (includeParticipants)
+                {
+                    baseGetTournamentUriStr += "&include_participants=1";
+                }
+
+                if (includeMatches)
+                {
+                    baseGetTournamentUriStr += "&include_matches=1";
+                }
+
+                var getTournamentUri = new Uri(baseGetTournamentUriStr);
+
+                using HttpResponseMessage response = await Client.GetAsync(getTournamentUri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<TournamentResponse>(response);
+                }
+
+                return response.StatusCode == HttpStatusCode.UnprocessableEntity
+                    ? await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response)
+                    : ErrorResponse.GetEmptyError(response.StatusCode);
             }
         }
 
         [PublicAPI]
-        public Task<IEnumerable<IChallongeResponse>> GetAllParticipants(int tournamentId)
+        public class Participant
         {
-            return GetAllParticipants<int>(tournamentId);
-        }
+            private readonly string _apiKey;
 
-        [PublicAPI]
-        public Task<IEnumerable<IChallongeResponse>> GetAllParticipants(string tournamentId)
-        {
-            return GetAllParticipants<string>(tournamentId);
-        }
-
-        private async Task<IEnumerable<IChallongeResponse>> GetAllParticipants<T>(T tournamentId)
-            where T : IConvertible
-        {
-            var getAParticipantUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}/participants.json?api_key={_apiKey}");
-
-            using HttpResponseMessage response = await Client.GetAsync(getAParticipantUri);
-
-            if (response.IsSuccessStatusCode)
+            public Participant(string apiKey)
             {
-                var participantResponses = JsonConvert.DeserializeObject<IEnumerable<ParticipantResponse>>(await response.Content.ReadAsStringAsync());
-
-                return participantResponses.Set(participantResponse => participantResponse.StatusCode = HttpStatusCode.OK);
+                _apiKey = apiKey;
             }
 
-            if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+            [PublicAPI]
+            public Task<IChallongeResponse> BulkAddParticipants(int tournamentId, IEnumerable<IParticipant> participants)
             {
+                return BulkAddParticipants<int>(tournamentId, participants);
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> BulkAddParticipants(string tournamentId, IEnumerable<IParticipant> participants)
+            {
+                return BulkAddParticipants<string>(tournamentId, participants);
+            }
+
+            private async Task<IChallongeResponse> BulkAddParticipants<T>(T tournamentId, IEnumerable<IParticipant> participants)
+                where T : IConvertible
+            {
+                var postParticipantsUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}/participants/bulk_add.json?api_key={_apiKey}");
+
+                var payload = new ParticipantPayload(participants);
+
+                string serializedPayload = JsonConvert.SerializeObject(payload);
+
+                var jsonContent = new StringContent(serializedPayload, Encoding.UTF8, "application/json");
+
+                using HttpResponseMessage response = await Client.PostAsync(
+                    postParticipantsUri,
+                    jsonContent);
+
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response);
+                }
+
+                return response.IsSuccessStatusCode
+                    ? await ChallongeResponse.FromHttpResponseMessageAsync<ChallongeResponse>(response)
+                    : ErrorResponse.GetEmptyError(response.StatusCode);
+            }
+
+            private class ParticipantPayload
+            {
+                [JsonProperty("participants")]
+                public IEnumerable<IParticipant> Participants { get; set; }
+
+                public ParticipantPayload(IEnumerable<IParticipant> participants)
+                {
+                    Participants = participants;
+                }
+            }
+
+            [PublicAPI]
+            public Task<IEnumerable<IChallongeResponse>> GetAllParticipants(int tournamentId)
+            {
+                return GetAllParticipants<int>(tournamentId);
+            }
+
+            [PublicAPI]
+            public Task<IEnumerable<IChallongeResponse>> GetAllParticipants(string tournamentId)
+            {
+                return GetAllParticipants<string>(tournamentId);
+            }
+
+            private async Task<IEnumerable<IChallongeResponse>> GetAllParticipants<T>(T tournamentId)
+                where T : IConvertible
+            {
+                var getAParticipantUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}/participants.json?api_key={_apiKey}");
+
+                using HttpResponseMessage response = await Client.GetAsync(getAParticipantUri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseStr = await response.Content.ReadAsStringAsync();
+
+                    var participantResponses = JsonConvert.DeserializeObject<IEnumerable<ParticipantResponse>>(responseStr);
+
+                    return participantResponses.Set(participantResponse => participantResponse.StatusCode = HttpStatusCode.OK);
+                }
+
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    return new[]
+                    {
+                        await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response)
+                    };
+                }
+
                 return new[]
                 {
-                    await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response)
+                    ErrorResponse.GetEmptyError(response.StatusCode)
                 };
             }
 
-            return new[]
+            [PublicAPI]
+            public Task<IChallongeResponse> GetAParticipant(int tournamentId, int participantId)
             {
+                return GetAParticipant<int>(tournamentId, participantId);
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> GetAParticipant(string tournamentId, int participantId)
+            {
+                return GetAParticipant<string>(tournamentId, participantId);
+            }
+
+            private async Task<IChallongeResponse> GetAParticipant<T>(T tournamentId, int participantId)
+                where T : IConvertible
+            {
+                var getAParticipantUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}/participants/{participantId}.json?api_key={_apiKey}");
+
+                using HttpResponseMessage response = await Client.GetAsync(getAParticipantUri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<ParticipantResponse>(response);
+                }
+
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response);
+                }
+
+                return ErrorResponse.GetEmptyError(response.StatusCode);
+            }
+        }
+
+        [PublicAPI]
+        public class Match
+        {
+            private readonly string _apiKey;
+
+            public Match(string apiKey)
+            {
+                _apiKey = apiKey;
+            }
+
+            [PublicAPI]
+            public Task<IEnumerable<IChallongeResponse>> GetAllMatches(
+            int tournamentId,
+            GetMatchState state = GetMatchState.All,
+            int? participantId = null)
+            {
+                return GetAllMatches<int>(tournamentId, state, participantId);
+            }
+
+            [PublicAPI]
+            public Task<IEnumerable<IChallongeResponse>> GetAllMatches(
+                string tournamentId,
+                GetMatchState state = GetMatchState.All,
+                int? participantId = null)
+            {
+                return GetAllMatches<string>(tournamentId, state, participantId);
+            }
+
+            private async Task<IEnumerable<IChallongeResponse>> GetAllMatches<T>(
+                T tournamentId,
+                GetMatchState state = GetMatchState.All,
+                int? participantId = null)
+                where T : IConvertible
+            {
+                string allMatchesUriStr = $"{BaseApiUrl}tournaments/{tournamentId}/matches.json?api_key={_apiKey}";
+
+                if (state != GetMatchState.All)
+                {
+                    allMatchesUriStr += $"&state={state.AsString()}";
+                }
+
+                if (participantId != null)
+                {
+                    allMatchesUriStr += $"&participant_id={participantId.Value}";
+                }
+
+                var getAllMatchesUri = new Uri(allMatchesUriStr);
+
+                using HttpResponseMessage response = await Client.GetAsync(getAllMatchesUri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseStr = await response.Content.ReadAsStringAsync();
+
+                    var matchesResponse = JsonConvert.DeserializeObject<IEnumerable<MatchResponse>>(responseStr);
+
+                    return matchesResponse.Set(matchRes => matchRes.StatusCode = HttpStatusCode.OK);
+                }
+
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    return new[]
+                    {
+                    await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response)
+                };
+                }
+
+                return new[]
+                {
                 ErrorResponse.GetEmptyError(response.StatusCode)
             };
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> GetAMatch(
+                int tournamentId,
+                int matchId,
+                bool includeAttachments = false)
+            {
+                return GetAMatch<int>(tournamentId, matchId, includeAttachments);
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> GetAMatch(
+                string tournamentId,
+                int matchId,
+                bool includeAttachments = false)
+            {
+                return GetAMatch<string>(tournamentId, matchId, includeAttachments);
+            }
+
+            private async Task<IChallongeResponse> GetAMatch<T>(
+                T tournamentId,
+                int matchId,
+                bool includeAttachments = false)
+                where T : IConvertible
+            {
+                string baseGetAMatchUrlStr = includeAttachments
+                    ? $"{BaseApiUrl}tournaments/{tournamentId}/matches/{matchId}.json?api_key={_apiKey}&include_attachments=1"
+                    : $"{BaseApiUrl}tournaments/{tournamentId}/matches/{matchId}.json?api_key={_apiKey}";
+
+                var getAMatchUri = new Uri(baseGetAMatchUrlStr);
+
+                using HttpResponseMessage response = await Client.GetAsync(getAMatchUri);
+
+                return await HandleSingleMatchResponse(response);
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> UpdateAMatch(
+                int tournamentId,
+                int matchId,
+                [NotNull] SetScores setScores,
+                int? playerOneVotes = null,
+                int? playerTwoVotes = null)
+            {
+                return UpdateAMatch<int>(
+                    tournamentId,
+                    matchId,
+                    setScores,
+                    playerOneVotes,
+                    playerTwoVotes);
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> UpdateAMatch(
+                string tournamentId,
+                int matchId,
+                [NotNull] SetScores setScores,
+                int? playerOneVotes = null,
+                int? playerTwoVotes = null)
+            {
+                return UpdateAMatch<string>(
+                    tournamentId,
+                    matchId,
+                    setScores,
+                    playerOneVotes,
+                    playerTwoVotes);
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> UpdateAMatch(
+                int tournamentId,
+                int matchId,
+                [NotNull] MatchScore matchScore,
+                int? playerOneVotes = null,
+                int? playerTwoVotes = null)
+            {
+                return UpdateAMatch<int>(
+                    tournamentId,
+                    matchId,
+                    matchScore,
+                    playerOneVotes,
+                    playerTwoVotes);
+            }
+
+            [PublicAPI]
+            public Task<IChallongeResponse> UpdateAMatch(
+                string tournamentId,
+                int matchId,
+                [NotNull] MatchScore matchScore,
+                int? playerOneVotes = null,
+                int? playerTwoVotes = null)
+            {
+                return UpdateAMatch<string>(
+                    tournamentId,
+                    matchId,
+                    matchScore,
+                    playerOneVotes,
+                    playerTwoVotes);
+            }
+
+            private async Task<IChallongeResponse> UpdateAMatch<T>(
+                T tournamentId,
+                int matchId,
+                [NotNull] MatchScore matchScore,
+                int? playerOneVotes = null,
+                int? playerTwoVotes = null)
+                where T : IConvertible
+            {
+                Uri updateAMatchUri = GetUpdateAMatchUri(tournamentId, matchId);
+
+                int? winnerId = matchScore.GetWinnerId();
+
+                string winnerIdStr = winnerId == null
+                    ? "tie"
+                    : winnerId.Value.ToString();
+
+                var payload = new UpdateMatchPayload(
+                    new MatchPayload(
+                        matchScore.ToString(),
+                        winnerIdStr,
+                        playerOneVotes,
+                        playerTwoVotes));
+
+                string serializedPayload = JsonConvert.SerializeObject(payload);
+
+                var jsonContent = new StringContent(serializedPayload, Encoding.UTF8, "application/json");
+
+                using HttpResponseMessage response = await Client.PutAsync(updateAMatchUri, jsonContent);
+
+                return await HandleSingleMatchResponse(response);
+            }
+
+            private async Task<IChallongeResponse> UpdateAMatch<T>(
+                T tournamentId,
+                int matchId,
+                [NotNull] SetScores setScores,
+                int? playerOneVotes = null,
+                int? playerTwoVotes = null)
+                where T : IConvertible
+            {
+                Uri updateAMatchUri = GetUpdateAMatchUri(tournamentId, matchId);
+
+                int? winnerId = setScores.GetWinnerId();
+
+                string winnerIdStr = winnerId == null
+                    ? "tie"
+                    : winnerId.Value.ToString();
+
+                var payload = new UpdateMatchPayload(
+                    new MatchPayload(
+                        setScores.GetSetScoresString(),
+                        winnerIdStr,
+                        playerOneVotes,
+                        playerTwoVotes));
+
+                string serializedPayload = JsonConvert.SerializeObject(payload);
+
+                var jsonContent = new StringContent(serializedPayload, Encoding.UTF8, "application/json");
+
+                using HttpResponseMessage response = await Client.PutAsync(updateAMatchUri, jsonContent);
+
+                return await HandleSingleMatchResponse(response);
+            }
+
+            private Uri GetUpdateAMatchUri<T>(T tournamentId, int matchId)
+                where T : IConvertible
+            {
+                return new Uri($"{BaseApiUrl}tournaments/{tournamentId}/matches/{matchId}.json?api_key={_apiKey}");
+            }
+
+            private class UpdateMatchPayload
+            {
+                [JsonProperty("match")]
+                public MatchPayload Match { get; }
+
+                public UpdateMatchPayload(MatchPayload match)
+                {
+                    Match = match;
+                }
+            }
+
+            private class MatchPayload
+            {
+                [JsonProperty("scores_csv")]
+                public string ScoresCsv { get; }
+
+                [JsonProperty("winner_id")]
+                public string WinnerId { get; }
+
+                [JsonProperty("player1_votes")]
+                public int? PlayerOneVotes { get; }
+
+                [JsonProperty("player2_votes")]
+                public int? PlayerTwoVotes { get; }
+
+                public MatchPayload(string scores, string winnerId, int? oneVotes, int? twoVotes)
+                {
+                    ScoresCsv = scores;
+                    WinnerId = winnerId;
+                    PlayerOneVotes = oneVotes;
+                    PlayerTwoVotes = twoVotes;
+                }
+            }
+
+            private static async Task<IChallongeResponse> HandleSingleMatchResponse(HttpResponseMessage response)
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<MatchResponse>(response);
+                }
+
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response);
+                }
+
+                return ErrorResponse.GetEmptyError(response.StatusCode);
+            }
         }
 
         [PublicAPI]
-        public Task<IChallongeResponse> GetAParticipant(int tournamentId, int participantId)
+        public class Attachment
         {
-            return GetAParticipant<int>(tournamentId, participantId);
-        }
+            private readonly string _apiKey;
 
-        [PublicAPI]
-        public Task<IChallongeResponse> GetAParticipant(string tournamentId, int participantId)
-        {
-            return GetAParticipant<string>(tournamentId, participantId);
+            public Attachment(string apiKey)
+            {
+                _apiKey = apiKey;
+            }
+
+            public Task<IEnumerable<IChallongeResponse>> GetAllAttachments(
+                int tournamentId,
+                int matchId)
+            {
+                return GetAllAttachments<int>(tournamentId, matchId);
+            }
+
+            public Task<IEnumerable<IChallongeResponse>> GetAllAttachments(
+                string tournamentId,
+                int matchId)
+            {
+                return GetAllAttachments<string>(tournamentId, matchId);
+            }
+
+            private async Task<IEnumerable<IChallongeResponse>> GetAllAttachments<T>(
+                T tournamentId,
+                int matchId)
+                where T : IConvertible
+            {
+                var getAllAttachmentsUri = new Uri($"{BaseApiUrl}/tournaments/{tournamentId}/matches/{matchId}/attachments.json?api_key={_apiKey}");
+
+                using HttpResponseMessage response = await Client.GetAsync(getAllAttachmentsUri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseStr = await response.Content.ReadAsStringAsync();
+
+                    var attachments = JsonConvert.DeserializeObject<IEnumerable<MatchAttachmentResponse>>(responseStr);
+
+                    return attachments.Set(res => res.StatusCode = HttpStatusCode.OK);
+                }
+
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    return new[]
+                    {
+                        await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response)
+                    };
+                }
+
+                return new[]
+                {
+                    ErrorResponse.GetEmptyError(response.StatusCode)
+                };
+            }
+
+            public Task<IChallongeResponse> GetAttachment(
+                int tournamentId,
+                int matchId,
+                int attachmentId)
+            {
+                return GetAttachment<int>(
+                    tournamentId,
+                    matchId,
+                    attachmentId);
+            }
+
+            public Task<IChallongeResponse> GetAttachment(
+                string tournamentId,
+                int matchId,
+                int attachmentId)
+            {
+                return GetAttachment<string>(
+                    tournamentId,
+                    matchId,
+                    attachmentId);
+            }
+
+            private async Task<IChallongeResponse> GetAttachment<T>(
+                T tournamentId,
+                int matchId,
+                int attachmentId)
+            {
+                var getAttachmentUri = new Uri(
+                    $"{BaseApiUrl}tournaments/{tournamentId}/matches/{matchId}/attachments/{attachmentId}.json?api_key={_apiKey}");
+
+                using HttpResponseMessage response = await Client.GetAsync(getAttachmentUri);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<MatchAttachmentResponse>(response);
+                }
+
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    return await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response);
+                }
+
+                return ErrorResponse.GetEmptyError(response.StatusCode);
+            }
         }
 
         [PublicAPI]
         public static IEnumerable<IParticipant> AssignSeeds(IEnumerable<IParticipant> participants)
         {
             return participants.Set((participant, i) => participant.Seed = i + 1);
-        }
-
-        private async Task<IChallongeResponse> GetAParticipant<T>(T tournamentId, int participantId)
-            where T : IConvertible
-        {
-            var getAParticipantUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}/participants/{participantId}.json?api_key={_apiKey}");
-
-            using HttpResponseMessage response = await Client.GetAsync(getAParticipantUri);
-
-            if (response.IsSuccessStatusCode)
-            {
-                return await ChallongeResponse.FromHttpResponseMessageAsync<ParticipantResponse>(response);
-            }
-
-            if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
-            {
-                return await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response);
-            }
-
-            return ErrorResponse.GetEmptyError(response.StatusCode);
-        }
-
-        public Task<IEnumerable<IChallongeResponse>> GetAllMatches(
-            int tournamentId,
-            GetMatchState state = GetMatchState.All,
-            int? participantId = null)
-        {
-            return GetAllMatches<int>(tournamentId, state, participantId);
-        }
-
-        public Task<IEnumerable<IChallongeResponse>> GetAllMatches(
-            string tournamentId,
-            GetMatchState state = GetMatchState.All,
-            int? participantId = null)
-        {
-            return GetAllMatches<string>(tournamentId, state, participantId);
-        }
-
-        private async Task<IEnumerable<IChallongeResponse>> GetAllMatches<T>(
-            T tournamentId,
-            GetMatchState state = GetMatchState.All,
-            int? participantId = null)
-            where T : IConvertible
-        {
-            string allMatchesUriStr = $"{BaseApiUrl}tournaments/{tournamentId}/matches.json?api_key={_apiKey}";
-
-            if (state != GetMatchState.All)
-            {
-                allMatchesUriStr += $"&state={state.AsString()}";
-            }
-
-            if (participantId != null)
-            {
-                allMatchesUriStr += $"&participant_id={participantId.Value}";
-            }
-
-            var getAllMatchesUri = new Uri(allMatchesUriStr);
-
-            using HttpResponseMessage response = await Client.GetAsync(getAllMatchesUri);
-
-            if (response.IsSuccessStatusCode)
-            {
-                string responseStr = await response.Content.ReadAsStringAsync();
-
-                var matchesResponse = JsonConvert.DeserializeObject<IEnumerable<MatchResponse>>(responseStr);
-
-                return matchesResponse.Set(x => x.StatusCode = HttpStatusCode.OK);
-            }
-
-            if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
-            {
-                return new[]
-                {
-                    await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response)
-                };
-            }
-
-            return new[]
-            {
-                ErrorResponse.GetEmptyError(response.StatusCode)
-            };
-        }
-
-        public Task<IChallongeResponse> GetAMatch(
-            int tournamentId,
-            int matchId,
-            bool includeAttachments = false)
-        {
-            return GetAMatch<int>(tournamentId, matchId, includeAttachments);
-        }
-
-        public Task<IChallongeResponse> GetAMatch(
-            string tournamentId,
-            int matchId,
-            bool includeAttachments = false)
-        {
-            return GetAMatch<string>(tournamentId, matchId, includeAttachments);
-        }
-
-        private async Task<IChallongeResponse> GetAMatch<T>(
-            T tournamentId,
-            int matchId,
-            bool includeAttachments = false)
-            where T : IConvertible
-        {
-            var getAMatchUri = new Uri($"{BaseApiUrl}tournaments/{tournamentId}/matches/{matchId}.json?api_key={_apiKey}");
-
-            using HttpResponseMessage response = await Client.GetAsync(getAMatchUri);
-
-            return await HandleSingleMatchResponse(response);
-        }
-
-        [PublicAPI]
-        public Task<IChallongeResponse> UpdateAMatch(
-            int tournamentId,
-            int matchId,
-            [NotNull] SetScores setScores,
-            int? playerOneVotes = null,
-            int? playerTwoVotes = null)
-        {
-            return UpdateAMatch<int>(
-                tournamentId,
-                matchId,
-                setScores,
-                playerOneVotes,
-                playerTwoVotes);
-        }
-
-        [PublicAPI]
-        public Task<IChallongeResponse> UpdateAMatch(
-            string tournamentId,
-            int matchId,
-            [NotNull] SetScores setScores,
-            int? playerOneVotes = null,
-            int? playerTwoVotes = null)
-        {
-            return UpdateAMatch<string>(
-                tournamentId,
-                matchId,
-                setScores,
-                playerOneVotes,
-                playerTwoVotes);
-        }
-
-        [PublicAPI]
-        public Task<IChallongeResponse> UpdateAMatch(
-            int tournamentId,
-            int matchId,
-            [NotNull] MatchScore matchScore,
-            int? playerOneVotes = null,
-            int? playerTwoVotes = null)
-        {
-            return UpdateAMatch<int>(
-                tournamentId,
-                matchId,
-                matchScore,
-                playerOneVotes,
-                playerTwoVotes);
-        }
-
-        [PublicAPI]
-        public Task<IChallongeResponse> UpdateAMatch(
-            string tournamentId,
-            int matchId,
-            [NotNull] MatchScore matchScore,
-            int? playerOneVotes = null,
-            int? playerTwoVotes = null)
-        {
-            return UpdateAMatch<string>(
-                tournamentId,
-                matchId,
-                matchScore,
-                playerOneVotes,
-                playerTwoVotes);
-        }
-
-        private async Task<IChallongeResponse> UpdateAMatch<T>(
-            T tournamentId,
-            int matchId,
-            [NotNull] MatchScore matchScore,
-            int? playerOneVotes = null,
-            int? playerTwoVotes = null)
-            where T : IConvertible
-        {
-            Uri updateAMatchUri = GetUpdateAMatchUri(tournamentId, matchId);
-
-            int? winnerId = matchScore.GetWinnerId();
-
-            string winnerIdStr = winnerId == null
-                ? "tie"
-                : winnerId.Value.ToString();
-
-            var payload = new UpdateMatchPayload(
-                new MatchPayload(
-                    matchScore.ToString(),
-                    winnerIdStr,
-                    playerOneVotes,
-                    playerTwoVotes));
-
-            string serializedPayload = JsonConvert.SerializeObject(payload);
-
-            var jsonContent = new StringContent(serializedPayload, Encoding.UTF8, "application/json");
-
-            using HttpResponseMessage response = await Client.PutAsync(updateAMatchUri, jsonContent);
-
-            return await HandleSingleMatchResponse(response);
-        }
-
-        private async Task<IChallongeResponse> UpdateAMatch<T>(
-            T tournamentId,
-            int matchId,
-            [NotNull] SetScores setScores,
-            int? playerOneVotes = null,
-            int? playerTwoVotes = null)
-            where T : IConvertible
-        {
-            Uri updateAMatchUri = GetUpdateAMatchUri(tournamentId, matchId);
-
-            int? winnerId = setScores.GetWinnerId();
-
-            string winnerIdStr = winnerId == null
-                ? "tie"
-                : winnerId.Value.ToString();
-
-            var payload = new UpdateMatchPayload(
-                new MatchPayload(
-                    setScores.GetSetScoresString(),
-                    winnerIdStr,
-                    playerOneVotes,
-                    playerTwoVotes));
-
-            string serializedPayload = JsonConvert.SerializeObject(payload);
-
-            var jsonContent = new StringContent(serializedPayload, Encoding.UTF8, "application/json");
-
-            using HttpResponseMessage response = await Client.PutAsync(updateAMatchUri, jsonContent);
-
-            return await HandleSingleMatchResponse(response);
-        }
-
-        private Uri GetUpdateAMatchUri<T>(T tournamentId, int matchId)
-            where T : IConvertible
-        {
-            return new Uri($"{BaseApiUrl}tournaments/{tournamentId}/matches/{matchId}.json?api_key={_apiKey}");
-        }
-
-        private class UpdateMatchPayload
-        {
-            [JsonProperty("match")]
-            public MatchPayload Match { get; }
-
-            public UpdateMatchPayload(MatchPayload match)
-            {
-                Match = match;
-            }
-        }
-
-        private class MatchPayload
-        {
-            [JsonProperty("scores_csv")]
-            public string ScoresCsv { get; }
-
-            [JsonProperty("winner_id")]
-            public string WinnerId { get; }
-
-            [JsonProperty("player1_votes")]
-            public int? PlayerOneVotes { get; }
-
-            [JsonProperty("player2_votes")]
-            public int? PlayerTwoVotes { get; }
-
-            public MatchPayload(string scores, string winnerId, int? oneVotes, int? twoVotes)
-            {
-                ScoresCsv = scores;
-                WinnerId = winnerId;
-                PlayerOneVotes = oneVotes;
-                PlayerTwoVotes = twoVotes;
-            }
-        }
-
-        private static async Task<IChallongeResponse> HandleSingleMatchResponse(HttpResponseMessage response)
-        {
-            if (response.IsSuccessStatusCode)
-            {
-                return await ChallongeResponse.FromHttpResponseMessageAsync<MatchResponse>(response);
-            }
-
-            if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
-            {
-                return await ChallongeResponse.FromHttpResponseMessageAsync<ErrorResponse>(response);
-            }
-
-            return ErrorResponse.GetEmptyError(response.StatusCode);
         }
     }
 

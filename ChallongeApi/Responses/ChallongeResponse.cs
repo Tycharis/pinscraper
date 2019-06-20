@@ -1,10 +1,12 @@
 ﻿using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 
 namespace ChallongeApi.Responses
 {
+    [PublicAPI]
     public interface IChallongeResponse
     {
         HttpStatusCode StatusCode { get; }
@@ -13,10 +15,12 @@ namespace ChallongeApi.Responses
     /// <summary>
     /// The base class that represents a response from the Challonge API.
     /// </summary>
+    [PublicAPI]
     public abstract class ChallongeResponse : IChallongeResponse
     {
         public HttpStatusCode StatusCode { get; internal set; }
 
+        [PublicAPI]
         public static async Task<T> FromHttpResponseMessageAsync<T>(HttpResponseMessage responseMessage)
             where T : ChallongeResponse
         {

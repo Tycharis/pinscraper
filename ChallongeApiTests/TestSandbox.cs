@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ChallongeApi;
+using ChallongeApi.Matches;
 using ChallongeApi.Responses;
 using Newtonsoft.Json;
 
@@ -49,7 +50,7 @@ namespace ChallongeApiTests
 
             Console.WriteLine($"Getting tournament {TOURNAMENT_URL}");
 
-            IChallongeResponse tournament = await client.GetTournament(TOURNAMENT_URL);
+            IChallongeResponse tournament = await client.TournamentApi.GetTournament(TOURNAMENT_URL);
 
             Console.WriteLine("Done!");
 
@@ -103,11 +104,11 @@ namespace ChallongeApiTests
                     }
                 });
 
-            IChallongeResponse addParticipantsResponse = await client.BulkAddParticipants(TOURNAMENT_URL, participants);
+            IChallongeResponse addParticipantsResponse = await client.ParticipantApi.BulkAddParticipants(TOURNAMENT_URL, participants);
 
             ConsoleWriteFormattedJson(addParticipantsResponse);
 
-            IEnumerable<IChallongeResponse> participantsResponse = await client.GetAllParticipants(TOURNAMENT_URL);
+            IEnumerable<IChallongeResponse> participantsResponse = await client.ParticipantApi.GetAllParticipants(TOURNAMENT_URL);
 
             if (participantsResponse is IEnumerable<ParticipantResponse> validParticipantResponse)
             {
@@ -119,7 +120,7 @@ namespace ChallongeApiTests
 
                 Participant firstParticipant = asParticipantObjects.FirstOrDefault();
 
-                IChallongeResponse singleParticipantResponse = await client.GetAParticipant(TOURNAMENT_URL, firstParticipant.Id);
+                IChallongeResponse singleParticipantResponse = await client.ParticipantApi.GetAParticipant(TOURNAMENT_URL, firstParticipant.Id);
 
                 if (singleParticipantResponse is ParticipantResponse validSingleParticipantResponse)
                 {
@@ -129,7 +130,7 @@ namespace ChallongeApiTests
                 }
             }
 
-            IEnumerable<IChallongeResponse> matchesResponse = await client.GetAllMatches(TOURNAMENT_URL);
+            IEnumerable<IChallongeResponse> matchesResponse = await client.MatchApi.GetAllMatches(TOURNAMENT_URL);
 
             if (matchesResponse is IEnumerable<MatchResponse> validMatchesResponse)
             {
@@ -139,9 +140,10 @@ namespace ChallongeApiTests
 
                 if (firstMatch != null)
                 {
-                    IChallongeResponse matchResponse = await client.GetAMatch(
+                    IChallongeResponse matchResponse = await client.MatchApi.GetAMatch(
                         TOURNAMENT_URL,
-                        firstMatch.Id);
+                        firstMatch.Id,
+                        true);
 
                     ConsoleWriteFormattedJson(matchResponse);
 
@@ -149,12 +151,37 @@ namespace ChallongeApiTests
                         new MatchParticipant(firstMatch.PlayerOneId.Value, 3),
                         new MatchParticipant(firstMatch.PlayerTwoId.Value, 5));
 
-                    IChallongeResponse updateFirstMatchResponse = await client.UpdateAMatch(
+                    IChallongeResponse updateFirstMatchResponse = await client.MatchApi.UpdateAMatch(
                         TOURNAMENT_URL,
                         firstMatch.Id,
                         matchScore);
 
                     ConsoleWriteFormattedJson(updateFirstMatchResponse);
+
+                    IEnumerable<IChallongeResponse> attachments = await client.AttachmentApi.GetAllAttachments(
+                        TOURNAMENT_URL,
+                        firstMatch.Id);
+
+                    ConsoleWriteFormattedJson(attachments);
+
+                    if (attachments is IEnumerable<MatchAttachmentResponse> validAttachmentResponses)
+                    {
+                        MatchAttachmentResponse attachment = validAttachmentResponses.FirstOrDefault();
+
+                        if (attachment == null)
+                        {
+                            Console.WriteLine("attachment not found!!!!!!!!!!!");
+                        }
+                        else
+                        {
+                            IChallongeResponse getAttachmentResponse = await client.AttachmentApi.GetAttachment(
+                                TOURNAMENT_URL,
+                                firstMatch.Id,
+                                attachment.MatchAttachment.Id);
+
+                            ConsoleWriteFormattedJson(getAttachmentResponse);
+                        }
+                    }
                 }
                 else
                 {

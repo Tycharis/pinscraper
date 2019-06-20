@@ -1,7 +1,9 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace ChallongeApi.Enums
 {
+    [PublicAPI]
     public enum GetMatchState
     {
         All,
@@ -10,8 +12,10 @@ namespace ChallongeApi.Enums
         Complete
     }
 
+    [PublicAPI]
     public static class GetMatchStateMethods
     {
+        [PublicAPI]
         public static string AsString(this GetMatchState state)
         {
             return state switch
